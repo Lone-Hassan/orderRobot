@@ -22,14 +22,25 @@ def order_robots_from_RobotSpareBin():
     archive_receipts()
     
 def open_robot_order_site():
+    """_summary_
+        navigate to site and click on alert message
+    """
     browser.goto("https://robotsparebinindustries.com/#/robot-order")
     browser.page().click(".alert-buttons >button[class='btn btn-dark']")
     
 def get_orders():
+    """_summary_
+    Downloads orders.csv to current directory
+    """
     http = HTTP()
     http.download(url="https://robotsparebinindustries.com/orders.csv", overwrite=True)
 
 def order_robot_from_csv():
+    """_summary_
+    Reads orders.csv returns as a table 
+    fills the form for oreders in csv
+    
+    """
     library = Tables()
     orders = library.read_table_from_csv("orders.csv",columns=["Order number","Head","Body","Legs","Address"])
     for row in orders:
@@ -40,6 +51,12 @@ def order_robot_from_csv():
         browser.page().click(".alert-buttons >button[class='btn btn-dark']")
         
 def fill_the_form(Order_Row=None):
+    """_summary_
+    Interacts with page to fill the form
+    Args:
+        Order_Row (_type_, optional): _description_. Defaults to None.
+    
+    """
     order_number = Order_Row["Order number"]
     head = Order_Row["Head"]
     body = Order_Row["Body"]
@@ -55,14 +72,27 @@ def fill_the_form(Order_Row=None):
         page.click('#order')
 
 def screenshot_robot(orderNumber):
+    """_summary_
+    Take screen shot of Reciept generated
+    Args:
+        orderNumber (_type_): _description_
+    """
     browser.page().screenshot(path=f"output/{orderNumber}.png")
 
 def store_receipt_as_pdf(orderNumber):
+    """_summary_
+    Make PDF file of order reciept and attach screenshot of crossponding order
+    Args:
+        orderNumber (_type_): _description_
+    """
     reciept_innerhtml = browser.page().locator("#receipt").inner_html()
     pdf = PDF()
     pdf.html_to_pdf(reciept_innerhtml,f"output/{orderNumber}.pdf")
     pdf.add_watermark_image_to_pdf(image_path=f"output/{orderNumber}.png",source_path=f"output/{orderNumber}.pdf",output_path=f"output/{orderNumber}.pdf")
     
 def archive_receipts():
+    """_summary_
+    Generate orders.zip folder of *.pdf in output directory
+    """
     lib =  Archive()
     lib.archive_folder_with_zip(folder="output",archive_name="output/orders.zip",include="*.pdf")
