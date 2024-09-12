@@ -4,7 +4,7 @@ from RPA.HTTP import HTTP
 from RPA.Tables import Tables
 from RPA.PDF import PDF
 from RPA.Archive import Archive
-
+import os
 @task
 def order_robots_from_RobotSpareBin():
     """
@@ -17,7 +17,7 @@ def order_robots_from_RobotSpareBin():
     
     browser.configure()
     open_robot_order_site()
-    get_orders()
+    #get_orders()
     order_robot_from_csv()
     archive_receipts()
     
@@ -34,6 +34,9 @@ def get_orders():
     """
     http = HTTP()
     http.download(url="https://robotsparebinindustries.com/orders.csv", overwrite=True)
+    library = Tables()
+    #ordersfile = get_orders()
+    return library.read_table_from_csv("orders.csv",columns=["Order number","Head","Body","Legs","Address"])
 
 def order_robot_from_csv():
     """_summary_
@@ -41,8 +44,7 @@ def order_robot_from_csv():
     fills the form for oreders in csv
     
     """
-    library = Tables()
-    orders = library.read_table_from_csv("orders.csv",columns=["Order number","Head","Body","Legs","Address"])
+    orders= get_orders()
     for row in orders:
         fill_the_form(row)
         screenshot_robot(row["Order number"])
@@ -73,21 +75,26 @@ def fill_the_form(Order_Row=None):
 
 def screenshot_robot(orderNumber):
     """_summary_
-    Take screen shot of Reciept generated
+    Take screen shot of Image of robot on Reciept page generated
     Args:
         orderNumber (_type_): _description_
     """
-    browser.page().screenshot(path=f"output/{orderNumber}.png")
-
+    image_innerhtml= browser.page().locator("#robot-preview-image")
+    imageData = browser.screenshot(image_innerhtml)
+    with open(f"output/{orderNumber}.png","wb") as f:
+        f.write(imageData)
+        
 def store_receipt_as_pdf(orderNumber):
     """_summary_
     Make PDF file of order reciept and attach screenshot of crossponding order
     Args:
         orderNumber (_type_): _description_
     """
-    reciept_innerhtml = browser.page().locator("#receipt").inner_html()
+   
+    reciept_innerHtml=browser.page().locator("#receipt").inner_html()
+    
     pdf = PDF()
-    pdf.html_to_pdf(reciept_innerhtml,f"output/{orderNumber}.pdf")
+    pdf.html_to_pdf(reciept_innerHtml,f"output/{orderNumber}.pdf")
     pdf.add_watermark_image_to_pdf(image_path=f"output/{orderNumber}.png",source_path=f"output/{orderNumber}.pdf",output_path=f"output/{orderNumber}.pdf")
     
 def archive_receipts():
@@ -96,3 +103,6 @@ def archive_receipts():
     """
     lib =  Archive()
     lib.archive_folder_with_zip(folder="output",archive_name="output/orders.zip",include="*.pdf")
+    for file in os.listdir("output"):
+        if file.endswith(".png"):
+            os.remove(os.path.join("output",file))

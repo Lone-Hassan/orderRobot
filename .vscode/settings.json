@@ -1,5 +1,6 @@
 {
     "python.analysis.extraPaths": [
         "c:/Users/Hassan/Desktop/orderRobot/OrderRobotFromRoboSpareBin/."
-    ]
+    ],
+    "python.terminal.activateEnvironment": false
 }
